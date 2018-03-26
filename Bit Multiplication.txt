@@ -1,0 +1,67 @@
+module sequential_mul2bit (accumulator, multiplier, clock, multiplicand, reset, start);
+    output[16:0]accumulator;
+    input [7:0]multiplicand, multiplier;
+    input clock, start,reset;
+
+    reg [16:0] accumulator;
+    integer count,tik;
+
+    wire [7:0] s;
+    wire [7:0]c;
+    reg[1:0] fsm;
+    parameter state0=00;
+    parameter state1=01;
+    parameter idle=11;
+
+    csa b0 (
+        .a (accumulator[15:8]),
+        .b (multiplicand[7:0]),
+        .cin (1'b0),
+        .cout (c[7:0]),
+        .sum (s[7:0])
+        );
+
+    always@ (posedge clock) begin
+        if (reset==1) begin
+			//accumulator <= 0;
+			tik<=1;
+			count<=0;
+			fsm<= 2'b11;accumulator <= {9'b0,multiplier[7:0]};
+		end
+		else begin 
+			if (start && (count<=7)) begin
+			
+			
+			//end
+// fsm= accumulator[1];
+			//else begin
+		      case(fsm)
+			     idle:	begin if  (accumulator==0) begin fsm<=idle; end
+				        else begin fsm<= accumulator[0]; end
+ 				 end
+		      	 state1: if (tik==1) begin
+				            accumulator[16:0] <= {c[7],s[7:0],accumulator[7:0]};
+				            $display ("output is =%b count is %d",accumulator, count);
+				            tik<=0;
+				            fsm<=state1;
+		                  end
+				          else begin
+				            accumulator <= accumulator>>1;
+				            fsm<= accumulator[1];
+				            count<= count+1;
+				            tik <= 1;
+				          end
+		        state0: begin accumulator[16:0]<= accumulator>>1;
+				        count<=count+1;
+				        tik<=1;
+				        fsm<=accumulator[1];
+				        $display ("output of shift is-%b",accumulator);
+				end
+				
+			    default: fsm<=idle;
+			  endcase
+		end
+      end
+  $display ("final output is = %b at time %t", accumulator[1:0],$time);
+  end
+endmodule

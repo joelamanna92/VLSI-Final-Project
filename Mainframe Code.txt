@@ -1,0 +1,69 @@
+`timescale 1ns / 10ps
+module test (
+
+
+    input [7:0] multiplier, 
+    input [7:0]multiplicand,
+    input [7:0]c,
+    input [7:0]s,
+    input clock,//input cin, 
+    input start,
+    input reset,
+    output reg [16:0] accumulator
+    );
+
+
+    reg start_flop;
+    reg [1:0] fsm;
+
+    wire trigger;
+
+
+    parameter idle=2'b11;
+    parameter state0=2'b0;
+    parameter state1=2'b01;
+
+    csa b0 (
+    .a (accumulator[15:8]),
+    .b (multiplicand[7:0]),
+    .cin (1'b0),
+    .cout (c[7:0]),
+    .sum (s[7:0])
+    );
+
+
+
+    always @ (posedge clock or posedge reset) begin
+        if (reset) 
+            start_flop <= 0;
+        else
+            start_flop <= start;
+    end
+    
+    assign trigger = !start_flop & start;
+
+    reg [3:0] count;
+
+    always @ (posedge clock) begin
+        count <= count+1;
+        if (reset)begin
+            accumulator <= 17'b0;fsm <= 2'b11; count <= 1'b0;
+        end
+        else if (trigger)
+            accumulator <= {9'b0,multiplier};
+        else
+            case (fsm)
+                idle: begin if (accumulator==0)fsm <= idle;
+		                    else fsm <= accumulator[0];
+	            end
+                state0: begin accumulator <= accumulator >> 1'b1;
+		                      fsm <= accumulator[1];
+		        end
+                state1: begin accumulator <= {1'b0,c[7],s,accumulator[7:1]}; fsm <= accumulator[1]; end
+
+            endcase
+        end
+    wire [7:0] answer;
+
+    assign answer = (count==10)?accumulator [16:0]:17'b0;
+endmodule

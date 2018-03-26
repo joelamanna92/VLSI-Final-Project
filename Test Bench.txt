@@ -1,0 +1,34 @@
+module tb_bit2_mul ();
+wire[15:0] accumulator;
+reg[7:0] multiplicand, multiplier;
+reg clock,start,reset;
+
+
+//test t1 (.accumulator(accumulator), .multiplier(multiplier), .clock(clock), .multiplicand(multiplicand), .reset(reset), .start(start));
+
+sequential_mul2bit c0 (accumulator, multiplier, clock, multiplicand, reset, start);
+
+initial begin
+$dumpfile("bit_2mul.vcd");
+$dumpvars(0);
+end
+
+initial
+begin
+clock=0;start=0;reset=1;
+
+ multiplier[7:0] = 8'b00001111;
+multiplicand = 8'b00001111;
+#2 start = 1;
+
+//#10 reset=0;
+end
+
+initial
+#5 reset=0;
+
+always #2 clock = ~clock;
+
+initial begin
+#100 $finish;end
+endmodule
